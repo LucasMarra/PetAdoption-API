@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
@@ -26,15 +28,22 @@ public class SyncService {
     }
 
 
-    public void syncAnimals() {
+    public void syncAnimals()  {
         log.info("Initializing sync process");
         isIndexingInProgress.set(true);
 
+        // Retrieving animals in parallel to optimize performance
         var animalsToSave = new ArrayList<Animal>();
-        var dogs = dogApiClient.getAllAnimals();
-        var cats = catApiClient.getAllAnimals();
-        animalsToSave.addAll(cats);
-        animalsToSave.addAll(dogs);
+        var dogsFuture = CompletableFuture.supplyAsync(dogApiClient::getAllAnimals);
+        var catsFuture = CompletableFuture.supplyAsync(catApiClient::getAllAnimals);
+
+        try {
+            animalsToSave.addAll(catsFuture.get());
+            animalsToSave.addAll(dogsFuture.get());
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Error while retrieving animals from providers", e);
+            Thread.currentThread().interrupt();
+        }
 
         animalRepository.save(animalsToSave);
 
