@@ -1,0 +1,19 @@
+# This docker-compose will create a container containing a PostgreSQL and a Redis.
+# Do not change this file unless you really know what you are doing.
+# docker-compose up -d
+version: '3.7'
+
+services:
+
+  postgres:
+    image: postgres:14.0
+    container_name: PostgreSQL-14.0-PetAdoption
+    restart: on-failure
+    environment:
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_USER: postgres
+      POSTGRES_DB: db_pet_adoption
+      TZ: 'GMT+3'
+      PGTZ: 'GMT+3'
+    ports:
+      - '5432:5432'
