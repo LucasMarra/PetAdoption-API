@@ -15,10 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-
-import static java.lang.Integer.parseInt;
 
 @Service
 @AllArgsConstructor
@@ -28,6 +25,9 @@ public class DogApiClient implements AnimalConnector {
     private final HttpService httpService;
     private final JsonService jsonService;
     private final DogTransformer dogTransformer;
+
+    private static final int PAGE_SIZE = 100;
+    private static final String DOG_SEARCH_URL_FORMAT = "/v1/images/search?page=%d&limit=%d&order=ASC&has_breeds=true";
 
     private Response makeGetRequest(String path) {
 
@@ -50,8 +50,8 @@ public class DogApiClient implements AnimalConnector {
         }
         return response;
     }
-
-    private List<DogResultEvent> getAllDogsPaginated() {
+    
+    private List<DogResultEvent> getAllDogsFromProvider() {
 
         log.info("Retrieving all dogs from provider ");
 
@@ -59,37 +59,30 @@ public class DogApiClient implements AnimalConnector {
         var result = new ArrayList<DogResultEvent>();
 
         while (true) {
-            var url = String.format("/v1/images/search?page=%d&limit=100&order=ASC&has_breeds=true", page);
-            var response = makeGetRequest(url);
+            var response = makeGetRequest(String.format(DOG_SEARCH_URL_FORMAT, page, PAGE_SIZE));
             var body = httpService.getBodyFrom(response);
-            var code = response.code();
-            log.info("Status code {}", code);
-            var dogs = jsonService.fromJson(body, new TypeReference<List<DogResultEvent>>() {});
-            log.info("Amount of dogs in the page {} is {} | result size is {}", page, dogs.size(), result.size());
-            result.addAll(dogs);
-
-            var totalPages = parseInt(Objects.requireNonNull(response.header("pagination-count")));
-            var current = parseInt(Objects.requireNonNull(response.header("pagination-page")));
-            page = current + 1;
+            var totalPages = response.headers("pagination-count");
+            var currentPage = response.headers("pagination-page");
 
 
-            log.info("Retrieving dogs | Page {} from {}", current, totalPages);
-            if (current >= totalPages) break;
-            else if (result.size()>150) break;
-            if (dogs.isEmpty()) break;
+            var dogResultEvents = jsonService.fromJson(body, new TypeReference<List<DogResultEvent>>() {});
 
-//              break;
+            log.debug("Retrieving dogs | Current page {} from {} pages", currentPage, totalPages);
+
+            result.addAll(dogResultEvents);
+            page++;
+
+            if (dogResultEvents.isEmpty()) break;
         }
 
-        log.info("Got {} dogs from provider", result.size());
-
+        log.info("Got total of {} dogs from provider", result.size());
         return result;
     }
 
 
 
     public List<Animal> getAllAnimals() {
-        var dogsResultEventList = getAllDogsPaginated();
+        var dogsResultEventList = getAllDogsFromProvider();
         return dogTransformer.from(dogsResultEventList);
     }
 }
