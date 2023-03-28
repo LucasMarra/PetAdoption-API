@@ -15,11 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-
-import static java.lang.Integer.parseInt;
-import static java.lang.Thread.sleep;
 
 @Service
 @AllArgsConstructor
@@ -29,6 +25,9 @@ public class CatApiClient implements AnimalConnector {
     private final HttpService httpService;
     private final JsonService jsonService;
     private final CatTransformer catTransformer;
+
+    private static final int PAGE_SIZE = 100;
+    private static final String CAT_SEARCH_URL_FORMAT = "/v1/images/search?page=%d&limit=%d&order=ASC&has_breeds=true";
 
     private Response makeGetRequest(String path) {
 
@@ -52,7 +51,7 @@ public class CatApiClient implements AnimalConnector {
         return response;
     }
 
-    private List<CatResultEvent> getAllCatsPaginated() {
+    private List<CatResultEvent> getAllCatsFromProvider() {
 
         log.info("Retrieving all cats from provider ");
 
@@ -60,28 +59,22 @@ public class CatApiClient implements AnimalConnector {
         var result = new ArrayList<CatResultEvent>();
 
         while (true) {
-            var url = String.format("/v1/images/search?page=%d&limit=100&order=ASC&has_breeds=true", page);
-            var response = makeGetRequest(url);
+            var response = makeGetRequest(String.format(CAT_SEARCH_URL_FORMAT, page, PAGE_SIZE));
             var body = httpService.getBodyFrom(response);
-            var code = response.code();
-            log.info("Status code {}", code);
-            var cats = jsonService.fromJson(body, new TypeReference<List<CatResultEvent>>() {});
-            log.info("Amount of cats in the page {} is {} | result size is {}", page, cats.size(), result.size());
-            result.addAll(cats);
+            var totalPages = response.headers("pagination-count");
+            var currentPage = response.headers("pagination-page");
 
-            var totalPages = parseInt(Objects.requireNonNull(response.header("pagination-count")));
-            var current = parseInt(Objects.requireNonNull(response.header("pagination-page")));
-            page = current + 1;
+            var catResultEventList = jsonService.fromJson(body, new TypeReference<List<CatResultEvent>>() {});
 
+            log.debug("Retrieving cats | Current page {} from {} pages", currentPage, totalPages);
 
-            log.info("Retrieving cats | Page {} from {}", current, totalPages);
-            if (current >= totalPages) break;
-            if (cats.isEmpty()) break;
-            else if (result.size()>150) break;
-//              break;
+            result.addAll(catResultEventList);
+            page++;
+
+            if (catResultEventList.isEmpty()) break;
         }
 
-        log.info("Got {} cats from provider", result.size());
+        log.info("Got total of {} cats from provider", result.size());
 
         return result;
     }
@@ -89,7 +82,7 @@ public class CatApiClient implements AnimalConnector {
 
 
     public List<Animal> getAllAnimals() {
-        var catResultEventList = getAllCatsPaginated();
+        var catResultEventList = getAllCatsFromProvider();
         return catTransformer.from(catResultEventList);
     }
 }
