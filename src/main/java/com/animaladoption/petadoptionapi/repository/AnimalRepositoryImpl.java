@@ -2,17 +2,23 @@ package com.animaladoption.petadoptionapi.repository;
 
 import com.animaladoption.petadoptionapi.domain.AnimaStatus;
 import com.animaladoption.petadoptionapi.domain.Animal;
+import com.animaladoption.petadoptionapi.repository.mapper.AnimalMapper;
+import com.animaladoption.petadoptionapi.repository.mapper.AnimalRowMapper;
 import com.animaladoption.petadoptionapi.util.SqlUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
@@ -22,9 +28,12 @@ import java.util.stream.IntStream;
 public class AnimalRepositoryImpl implements AnimalRepository {
 
     private final JdbcTemplate jdbcTemplate;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+    private final AnimalMapper animalMapper;
+    private final AnimalRowMapper animalRowMapper;
 
     private static final String UPSERT_ANIMAL_SQL = SqlUtils.loadSql("/animal/upsert_animal.sql");
-    private static int batchSize = 1000;
+    private static final int BATCH_SIZE = 1000;
 
     @Override
     public void save(List<Animal> animals) {
@@ -33,8 +42,8 @@ public class AnimalRepositoryImpl implements AnimalRepository {
 
         //Batch inserts animals in chunks of 1k to avoid overwhelming the database with a large transaction.
 
-        IntStream.range(0, (animals.size() + batchSize - 1) / batchSize)
-                .mapToObj(i -> animals.subList(i * batchSize, Math.min((i + 1) * batchSize, animals.size())))
+        IntStream.range(0, (animals.size() + BATCH_SIZE - 1) / BATCH_SIZE)
+                .mapToObj(i -> animals.subList(i * BATCH_SIZE, Math.min((i + 1) * BATCH_SIZE, animals.size())))
                 .forEach(batch -> jdbcTemplate.batchUpdate(UPSERT_ANIMAL_SQL, new BatchPreparedStatementSetter() {
 
                             @Override
@@ -57,4 +66,72 @@ public class AnimalRepositoryImpl implements AnimalRepository {
                             }
                         }));
     }
+
+    public int getTotalPages(String name, String category, String status, LocalDateTime updatedAt, int pageSize) {
+        StringBuilder query = new StringBuilder("SELECT COUNT(*) FROM tb_animal WHERE 1=1");
+        MapSqlParameterSource params = new MapSqlParameterSource();
+
+        if (name != null) {
+            query.append(" AND name LIKE :name");
+            params.addValue("name", "%" + name + "%");
+        }
+
+        if (category != null) {
+            query.append(" AND category = :category");
+            params.addValue("category", category);
+        }
+
+        if (status != null) {
+            query.append(" AND status = :status");
+            params.addValue("status", status);
+        }
+
+        if (updatedAt != null) {
+            query.append(" AND updated_at >= :updated_at");
+            params.addValue("updated_at", updatedAt);
+        }
+
+        var totalRecordsOpt =
+                Optional.ofNullable(namedParameterJdbcTemplate.queryForObject(query.toString(), params, Integer.class));
+        int totalRecords = totalRecordsOpt.orElse(0);
+        return (int) Math.ceil((double) totalRecords / pageSize);
+    }
+
+
+    public List<Animal> getFilteredAnimals(String term, String category, String status, LocalDateTime updatedAt, int pageIndex, int pageSize) {
+        StringBuilder query = new StringBuilder("SELECT * FROM tb_animal WHERE 1=1");
+        List<Object> params = new ArrayList<>();
+
+        if (term != null) {
+            query.append(" AND (name LIKE ? OR description LIKE ?)");
+            params.add("%" + term + "%");
+            params.add("%" + term + "%");
+        }
+
+        if (category != null) {
+            query.append(" AND category = ?");
+            params.add(category);
+        }
+
+        if (status != null) {
+            query.append(" AND status = ?");
+            params.add(status);
+        }
+
+        if (updatedAt != null) {
+            query.append(" AND updated_at >= ?");
+            params.add(updatedAt);
+        }
+
+        query.append(" ORDER BY created_at DESC");
+        query.append(" LIMIT ?");
+        query.append(" OFFSET ?");
+        params.add(pageSize);
+        params.add(pageIndex * pageSize);
+
+        var animalEntities =  jdbcTemplate.query(query.toString(), animalRowMapper, params.toArray());
+        return animalMapper.from(animalEntities);
+    }
+
 }
+

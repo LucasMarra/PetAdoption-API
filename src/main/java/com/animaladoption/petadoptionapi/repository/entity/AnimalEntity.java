@@ -1,22 +1,24 @@
-package com.animaladoption.petadoptionapi.domain;
+package com.animaladoption.petadoptionapi.repository.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-@Data
-@AllArgsConstructor
 @Builder
-public class Animal {
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
+public class AnimalEntity {
     private String id;
     private String externalId;
     private String name;
     private String description;
     private String imageUrl;
-    private AnimalCategory category;
-    private AnimaStatus status;
-    private LocalDateTime createdAt;
+    private String category;
+    private String status;
     private LocalDateTime updatedAt;
+    private LocalDateTime createdAt;
 }
