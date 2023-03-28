@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 @Service
 @AllArgsConstructor
@@ -29,8 +30,7 @@ public class DogApiClient implements AnimalConnector {
     private static final int PAGE_SIZE = 100;
     private static final String DOG_SEARCH_URL_FORMAT = "/v1/images/search?page=%d&limit=%d&order=ASC&has_breeds=true";
 
-    private Response makeGetRequest(String path) {
-
+    public Response makeGetRequest(String path) {
         var request = new Request.Builder()
                 .url(dogApiConfig.getUrl() + path)
                 .method("GET", null)
@@ -38,15 +38,21 @@ public class DogApiClient implements AnimalConnector {
                 .addHeader("x-api-key", dogApiConfig.getApiKey())
                 .build();
 
-        var response =  httpService.makeCall(request);
-        if(response.code() == 429) {
+        try {
+            return handleRateLimiting(() -> httpService.makeCall(request));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Response handleRateLimiting(Supplier<Response> requestSupplier) throws InterruptedException {
+        Response response;
+        while (true) {
+            response = requestSupplier.get();
+            if (response.code() != 429) break;
             log.info("Rate limiting reached. Waiting 1 minute to try again");
-            try {
-                TimeUnit.SECONDS.sleep(61);
-                return httpService.makeCall(request);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            TimeUnit.SECONDS.sleep(61);
         }
         return response;
     }
