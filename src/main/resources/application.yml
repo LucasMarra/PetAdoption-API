@@ -1,0 +1,20 @@
+server:
+  port: 8080
+  servlet.context-path: /api/pet-adoption/v1
+spring:
+  application:
+    name: pet-adoption
+  datasource:
+    url: jdbc:postgresql://localhost:5432/db_pet_adoption?verifyServerCertificate=false&useSSL=false
+    username: postgres
+    password: 123456
+externals:
+  cat-api:
+    url: https://api.thecatapi.com
+    x-api-key: live_drINnlst02aRpA3urahny1iGSQl1FyPAczpxiXMyiton2Rt1AEi2ISzEx9SmnTOt
+  dog-api:
+    url: https://api.thedogapi.com
+    x-api-key: live_Etzvv5UhIvNCpRr0iMqqVEZTjKJJIctTuAiqAKuq9jkxMh1u8kcRlAAefwQTY36e
+logging:
+  level:
+    com.animaladoption: debug
