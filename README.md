@@ -20,3 +20,7 @@ To run the project, follow these steps:
 1. Run `docker-compose up -d` to start the database.
 2. Run `./gradlew flywayMigrate` to run the migrations.
 3. Run `./gradlew bootrun` to start the application.
+
+### Disclaimer
+
+Please note that default Postgres values and external provider API keys have been used for the sake of convenience and ease of running the project. In a real-life scenario, it is highly recommended to use secure credentials and values tailored to your specific environment.
