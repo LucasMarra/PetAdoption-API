@@ -1,8 +1,8 @@
 package com.animaladoption.petadoptionapi.repository.mapper;
 
-import com.animaladoption.petadoptionapi.domain.AnimaStatus;
 import com.animaladoption.petadoptionapi.domain.Animal;
 import com.animaladoption.petadoptionapi.domain.AnimalCategory;
+import com.animaladoption.petadoptionapi.domain.AnimalStatus;
 import com.animaladoption.petadoptionapi.repository.entity.AnimalEntity;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +19,7 @@ public class AnimalMapper {
                         .description(animalEntity.getDescription())
                         .imageUrl(animalEntity.getImageUrl())
                         .category(AnimalCategory.valueOf(animalEntity.getCategory()))
-                        .status(AnimaStatus.valueOf(animalEntity.getStatus()))
+                        .status(AnimalStatus.valueOf(animalEntity.getStatus()))
                         .createdAt(animalEntity.getCreatedAt())
                         .updatedAt(animalEntity.getUpdatedAt())
                         .build())

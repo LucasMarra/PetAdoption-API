@@ -1,8 +1,8 @@
 package com.animaladoption.petadoptionapi.service;
 
-import com.animaladoption.petadoptionapi.domain.AnimaStatus;
 import com.animaladoption.petadoptionapi.domain.Animal;
 import com.animaladoption.petadoptionapi.domain.AnimalCategory;
+import com.animaladoption.petadoptionapi.domain.AnimalStatus;
 import com.animaladoption.petadoptionapi.external.api.thatapicompany.catapi.CatApiClient;
 import com.animaladoption.petadoptionapi.external.api.thatapicompany.dogapi.DogApiClient;
 import com.animaladoption.petadoptionapi.repository.AnimalRepository;
@@ -43,7 +43,7 @@ class SyncServiceTest {
                 .description("Cat 1 description")
                 .imageUrl("http://cat1.com")
                 .category(AnimalCategory.CAT)
-                .status(AnimaStatus.DISPONIVEL)
+                .status(AnimalStatus.AVAILABLE)
                 .build();
 
         Animal cat2 = Animal.builder()
@@ -53,7 +53,7 @@ class SyncServiceTest {
                 .description("Cat 2 description")
                 .imageUrl("http://cat2.com")
                 .category(AnimalCategory.CAT)
-                .status(AnimaStatus.DISPONIVEL)
+                .status(AnimalStatus.AVAILABLE)
                 .build();
 
         Animal dog1 = Animal.builder()
@@ -63,7 +63,7 @@ class SyncServiceTest {
                 .description("Dog 1 description")
                 .imageUrl("http://dog1.com")
                 .category(AnimalCategory.DOG)
-                .status(AnimaStatus.DISPONIVEL)
+                .status(AnimalStatus.AVAILABLE)
                 .build();
 
         Animal dog2 = Animal.builder()
@@ -73,7 +73,7 @@ class SyncServiceTest {
                 .description("Dog 2 description")
                 .imageUrl("http://dog2.com")
                 .category(AnimalCategory.DOG)
-                .status(AnimaStatus.DISPONIVEL)
+                .status(AnimalStatus.AVAILABLE)
                 .build();
 
         List<Animal> cats = new ArrayList<>();

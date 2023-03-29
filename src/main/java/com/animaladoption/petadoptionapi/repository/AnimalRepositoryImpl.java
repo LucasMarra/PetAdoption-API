@@ -1,7 +1,7 @@
 package com.animaladoption.petadoptionapi.repository;
 
-import com.animaladoption.petadoptionapi.domain.AnimaStatus;
 import com.animaladoption.petadoptionapi.domain.Animal;
+import com.animaladoption.petadoptionapi.domain.AnimalStatus;
 import com.animaladoption.petadoptionapi.repository.mapper.AnimalMapper;
 import com.animaladoption.petadoptionapi.repository.mapper.AnimalRowMapper;
 import com.animaladoption.petadoptionapi.util.SqlUtils;
@@ -55,7 +55,7 @@ public class AnimalRepositoryImpl implements AnimalRepository {
                                 ps.setString(4, animal.getDescription());
                                 ps.setString(5, animal.getImageUrl());
                                 ps.setString(6, animal.getCategory().toString());
-                                ps.setString(7, AnimaStatus.DISPONIVEL.toString());
+                                ps.setString(7, AnimalStatus.AVAILABLE.toString());
                                 ps.setObject(8, LocalDateTime.now());
                                 ps.setObject(9, LocalDateTime.now());
                             }
@@ -67,7 +67,8 @@ public class AnimalRepositoryImpl implements AnimalRepository {
                         }));
     }
 
-    public int getTotalPages(String name, String category, String status, LocalDateTime updatedAt, int pageSize) {
+    @Override
+    public Integer getTotalPages(String name, String category, String status, LocalDateTime createdAt, Integer pageSize) {
         StringBuilder query = new StringBuilder("SELECT COUNT(*) FROM tb_animal WHERE 1=1");
         MapSqlParameterSource params = new MapSqlParameterSource();
 
@@ -86,9 +87,9 @@ public class AnimalRepositoryImpl implements AnimalRepository {
             params.addValue("status", status);
         }
 
-        if (updatedAt != null) {
-            query.append(" AND updated_at >= :updated_at");
-            params.addValue("updated_at", updatedAt);
+        if (createdAt != null) {
+            query.append(" AND created_at >= :created_at");
+            params.addValue("created_at", createdAt);
         }
 
         var totalRecordsOpt =
@@ -97,8 +98,7 @@ public class AnimalRepositoryImpl implements AnimalRepository {
         return (int) Math.ceil((double) totalRecords / pageSize);
     }
 
-
-    public List<Animal> getFilteredAnimals(String term, String category, String status, LocalDateTime updatedAt, int pageIndex, int pageSize) {
+    public List<Animal> getAnimalsBy(String term, String category, String status, LocalDateTime createdAt, Integer pageIndex, Integer pageSize) {
         StringBuilder query = new StringBuilder("SELECT * FROM tb_animal WHERE 1=1");
         List<Object> params = new ArrayList<>();
 
@@ -118,9 +118,9 @@ public class AnimalRepositoryImpl implements AnimalRepository {
             params.add(status);
         }
 
-        if (updatedAt != null) {
-            query.append(" AND updated_at >= ?");
-            params.add(updatedAt);
+        if (createdAt != null) {
+            query.append(" AND created_at >= ?");
+            params.add(createdAt);
         }
 
         query.append(" ORDER BY created_at DESC");

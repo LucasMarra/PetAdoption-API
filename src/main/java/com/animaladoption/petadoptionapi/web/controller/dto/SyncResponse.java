@@ -7,7 +7,6 @@ import java.util.UUID;
 
 @Data
 @Builder
-//@JsonInclude(JsonInclude.Include.NON_NULL)
 public class SyncResponse {
     private String operationId;
     private String message;
@@ -16,14 +15,14 @@ public class SyncResponse {
     public static SyncResponse getSyncResponseSyncing(){
         return SyncResponse.builder()
                 .operationId(UUID.randomUUID().toString())
-                .message("A indexação de animais foi iniciada e está em andamento")
+                .message("Animal indexing has started and is in progress")
                 .status("SYNCING")
                 .build();
     }
 
     public static SyncResponse getAbortSyncing(){
         return SyncResponse.builder()
-                .message("Outra sincronização já está em andamento.")
+                .message("Another synchronization is already in progress")
                 .status("SYNCING")
                 .build();
     }
