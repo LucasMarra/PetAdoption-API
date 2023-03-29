@@ -1,0 +1,160 @@
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "Pet Adoption API"
+  description: "API for pet adoption application"
+host: "example.com"
+basePath: "/api/pet-adoption/v1"
+schemes:
+  - "https"
+produces:
+  - "application/json"
+paths:
+  /animal:
+    get:
+      tags:
+        - "Pet Adoption"
+      summary: "List animals"
+      description: "This endpoint lists animals paginated and allows filters in the form of query parameters. Possible filters include term (search by name or description), category (DOG or CAT), status (AVAILABLE or ADOPTED), and createdAt (creation date). The endpoint returns an array of animals, and response headers include the total number of pages, the current page, and the next page. If the search does not return any results, a 204 error is returned."
+      parameters:
+        - name: term
+          in: query
+          type: string
+          description: "Search by name or description"
+        - name: category
+          in: query
+          type: string
+          enum: [DOG, CAT]
+          description: "Filter by category (DOG or CAT)"
+        - name: status
+          in: query
+          type: string
+          enum: [AVAILABLE, ADOPTED]
+          description: "Filter by status (AVAILABLE or ADOPTED)"
+        - name: createdAt
+          in: query
+          type: string
+          description: "Filter by creation date"
+        - name: pageIndex
+          in: query
+          type: integer
+          description: "Current page"
+          default: 0
+        - name: pageSize
+          in: query
+          type: integer
+          description: "Page size"
+          default: 50
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Animal"
+        204:
+          description: "No Content"
+        400:
+          description: "Bad Request"
+          schema:
+            $ref: "#/definitions/BadRequestError"
+  /sync:
+    post:
+      tags:
+        - "Pet Adoption"
+      summary: "Initiate animal indexing"
+      description: "This endpoint initiates the indexing of animals in the database. If a synchronization process is already in progress, a 409 error is returned."
+      responses:
+        202:
+          description: "Accepted"
+          schema:
+            $ref: "#/definitions/SyncAcceptedResponse"
+        409:
+          description: "Conflict"
+          schema:
+            $ref: "#/definitions/SyncConflictResponse"
+  /animal/{idAnimal}/status:
+    patch:
+      tags:
+        - "Pet Adoption"
+      summary: "Update animal status"
+      description: "This endpoint updates the status of a specific animal identified by the provided id. The new status must be one of the following: AVAILABLE or ADOPTED. If the status is invalid, a 400 error is returned. If the animal is not found, a 404 error is returned. If the update is successful, a 204 error is returned."
+      parameters:
+        - name: idAnimal
+          in: path
+          type: string
+          required: true
+          description: "Animal ID"
+        - in: body
+          name: body
+          description: "Animal status"
+          required: true
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [AVAILABLE, ADOPTED]
+                example: "ADOPTED"
+      responses:
+        204:
+          description: "No Content"
+        400:
+          description: "Bad Request"
+          schema:
+            $ref: "#/definitions/BadRequestError"
+        404:
+          description: "Not Found"
+definitions:
+  SyncAcceptedResponse:
+    type: "object"
+    properties:
+      operationId:
+        type: "string"
+        example: "f1ef60a6-dfbf-4208-a1e4-4b3ce3fc0e5b"
+      message:
+        type: "string"
+        example: "Animal indexing has started and is in progress"
+      status:
+        type: "string"
+        example: "SYNCING"
+  SyncConflictResponse:
+    type: "object"
+    properties:
+      message:
+        type: "string"
+        example: "Another synchronization is already in progress"
+      status:
+        type: "string"
+  Animal:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+        example: "178037c8-42f6-485a-bcc5-9a3675159cd6"
+      name:
+        type: "string"
+        example: "Brittany"
+      imageUrl:
+        type: "string"
+        example: "https://cdn2.thedogapi.com/images/HJWZZxc4X_1280.jpg"
+      category:
+        type: "string"
+        enum: [ DOG, CAT ]
+        example: "DOG"
+      createdAt:
+        type: "string"
+        example: "2023-03-29T04:18:11.674456"
+      status:
+        type: "string"
+        enum: [ AVAILABLE, ADOPTED ]
+        example: "AVAILABLE"
+  BadRequestError:
+    type: "object"
+    properties:
+      statusCode:
+        type: "integer"
+        example: 400
+      message:
+        type: "string"
+        example: "Invalid status. Please choose a valid status from the following list: [AVAILABLE, ADOPTED]"

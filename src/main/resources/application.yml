@@ -1,13 +1,13 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
   servlet.context-path: /api/pet-adoption/v1
 spring:
   application:
     name: pet-adoption
   datasource:
-    url: jdbc:postgresql://localhost:5432/db_pet_adoption?verifyServerCertificate=false&useSSL=false
-    username: postgres
-    password: 123456
+    url: ${DATASOURCE_URL:jdbc:postgresql://pet-adoption-db.cydxy9tfjfpe.us-east-1.rds.amazonaws.com:5432/db_pet_adoption?verifyServerCertificate=false&useSSL=false}
+    username: ${DATASOURCE_USERNAME:postgres}
+    password: ${DATASOURCE_PASSWORD:123456}
 externals:
   cat-api:
     url: https://api.thecatapi.com
