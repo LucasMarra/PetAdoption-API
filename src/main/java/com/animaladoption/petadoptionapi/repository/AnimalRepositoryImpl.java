@@ -7,6 +7,7 @@ import com.animaladoption.petadoptionapi.repository.mapper.AnimalRowMapper;
 import com.animaladoption.petadoptionapi.util.SqlUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -131,6 +132,18 @@ public class AnimalRepositoryImpl implements AnimalRepository {
 
         var animalEntities =  jdbcTemplate.query(query.toString(), animalRowMapper, params.toArray());
         return animalMapper.from(animalEntities);
+    }
+
+    @Override
+    public Optional<Animal> updateStatus(String idAnimal, AnimalStatus status) {
+        log.debug("Updating idAnimal {} to status {} ", idAnimal, status);
+        String sql = "UPDATE tb_animal SET status = ? WHERE id = ? RETURNING *";
+        try {
+            var animalEntity = jdbcTemplate.queryForObject(sql, animalRowMapper, status.toString(), idAnimal);
+            return animalMapper.from(animalEntity);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
     }
 
 }

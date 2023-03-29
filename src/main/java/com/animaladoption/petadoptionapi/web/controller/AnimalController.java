@@ -3,13 +3,12 @@ package com.animaladoption.petadoptionapi.web.controller;
 import com.animaladoption.petadoptionapi.service.AnimalService;
 import com.animaladoption.petadoptionapi.web.controller.converter.AnimalConverter;
 import com.animaladoption.petadoptionapi.web.controller.dto.AnimalResponse;
+import com.animaladoption.petadoptionapi.web.controller.dto.AnimalStatusChangeRequest;
 import com.animaladoption.petadoptionapi.web.controller.validation.AnimalControllerRequestValidation;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -48,5 +47,17 @@ public class AnimalController {
                 .headers(responseHeaders)
                 .body(animalResponse);
 
+    }
+
+    @PatchMapping("animal/{idAnimal}/status")
+    public ResponseEntity<?> updateAnimalStatus(
+            @PathVariable String idAnimal, @RequestBody AnimalStatusChangeRequest statusRequest
+    ) {
+        requestValidation.validateUpdateAnimalStatusRequest(statusRequest.getStatus());
+        var animalStatus = animalConverter.from(statusRequest.getStatus());
+        var animal = animalService.updateStatus(idAnimal, animalStatus);
+
+        return animal.map(unused -> ResponseEntity.noContent().build())
+                .orElse(ResponseEntity.notFound().build());
     }
 }

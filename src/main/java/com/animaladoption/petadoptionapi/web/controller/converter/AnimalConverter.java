@@ -2,6 +2,8 @@ package com.animaladoption.petadoptionapi.web.controller.converter;
 
 import com.animaladoption.petadoptionapi.domain.AnimalCategory;
 import com.animaladoption.petadoptionapi.domain.AnimalStatus;
+import com.animaladoption.petadoptionapi.exception.ApiException;
+import com.animaladoption.petadoptionapi.exception.ExceptionMessage;
 import com.animaladoption.petadoptionapi.service.event.GetAnimalsEvent;
 import com.animaladoption.petadoptionapi.service.event.GetAnimalsResultEvent;
 import com.animaladoption.petadoptionapi.web.controller.dto.AnimalResponse;
@@ -17,6 +19,14 @@ import java.util.Optional;
 @Service
 @Slf4j
 public class AnimalConverter {
+
+    public AnimalStatus from (String status) {
+        try {
+            return AnimalStatus.valueOf(status);
+        } catch (IllegalArgumentException e) {
+            throw new ApiException(ExceptionMessage.INVALID_STATUS);
+        }
+    }
 
     public GetAnimalsEvent from(Map<String, String> getAnimalRequestParam) {
 

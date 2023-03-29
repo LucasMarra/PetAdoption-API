@@ -12,6 +12,15 @@ import java.util.Optional;
 
 @Service
 public class AnimalControllerRequestValidation {
+
+    public void validateUpdateAnimalStatusRequest(String status) {
+        try {
+            AnimalStatus.valueOf(status);
+        } catch (IllegalArgumentException e) {
+            throw new ApiException(ExceptionMessage.INVALID_STATUS);
+        }
+    }
+
     public void validateGetAnimalsRequest(Map<String, String> getAnimalRequestParam) {
         Optional.ofNullable(getAnimalRequestParam.get("category"))
                 .map(categoryName -> {
